@@ -1,3 +1,19 @@
+
+
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+struct Args{
+    slug_in: String,
+
+    #[arg(short, long, default_value_t = 1)]
+    repeat: u8,
+
+    #[arg(short, long)]
+    verbose: bool,
+}
+
+
 fn slugify(s: &str) -> String {
     let mut slug = String::new();
     let mut prevous_dash = false;
@@ -50,11 +66,15 @@ fn conv(c: char) -> char {
 
 
 fn run_program() {
-    let s = "";
+    let args = Args::parse();
 
-    let slug = slugify(s);
-    print!("\n{}\n\n", slug);
+    for _ in 0..args.repeat {
+        if(args.verbose){
+            println!("{}, {}", slugify(&args.slug_in), args.verbose);
+        }else{
 
+        }
+    }
 }
 
 
@@ -92,11 +112,11 @@ mod tests
         let s = "hello world !";
         assert_eq!("hello-world", slugify(s));
     }
-
     #[test]
     fn test_string_with_accents() {
         let s = "héllő-wôrlđ-!";
         assert_eq!("hello-world", slugify(s));
+
     }
 
     #[test]
