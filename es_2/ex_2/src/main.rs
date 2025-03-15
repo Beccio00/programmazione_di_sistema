@@ -38,9 +38,10 @@ fn slugify(s: &str) -> String {
             prevous_dash = true;           
         }
     }
-
+    
     if slug.ends_with('-') && slug.len() > 1 {
         slug.pop();
+        
     }
 
     slug
@@ -65,22 +66,18 @@ fn conv(c: char) -> char {
 }
 
 
+
 fn run_program() {
     let args = Args::parse();
 
-    for _ in 0..args.repeat {
-        if(args.verbose){
-            println!("{}, {}", slugify(&args.slug_in), args.verbose);
-        }else{
-
-        }
-    }
+    println!("{}", slugify(&args.slug_in));
 }
 
 
 #[cfg(test)]
 mod tests
 {
+    
     use super::*;
     
     #[test]
@@ -160,4 +157,5 @@ mod tests
 fn main() {
     run_program();
 }
+
 
