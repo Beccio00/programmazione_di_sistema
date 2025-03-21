@@ -92,6 +92,41 @@ pub fn mul(a: i32, b: i32) -> Result<u32, MulErr> {
     }
 }
 
+struct Node {
+    name: String,
+    size: u32,
+    count: u32,
+}
+
+impl Node {
+    pub fn new(name: &str) -> Node {
+        Node {name: name.to_string(), size: 0, count: 0}
+    }
+
+    pub fn size(self, n: u32) -> Self{
+        Self { name: self.name, size: n, count: self.count }
+        
+    }
+
+    pub fn count(self, c: u32) -> Self {
+        Self { name: self.name, size: self.size, count: c }
+    }
+
+    pub fn to_string(&self) {
+        println!("name:{} size:{} count:{}", self.name, self.size, self.count);
+    }
+
+    pub fn grow(&mut self) {
+        self.size = self.size + 1;
+    }
+
+    pub fn inc(&mut self) {
+        self.count = self.count +1
+    } 
+}
+
+
+
 fn main()  {
     let args = Args::parse();
 
@@ -122,7 +157,7 @@ fn main()  {
     let a_2 = 6;
     let b_2 = 8;
 
-    match mul(a_0, b_0) {
+match mul(a_0, b_0) {
         Ok(result) => println!("{}", result),
         Err(e) => {
             match e {
@@ -153,5 +188,19 @@ fn main()  {
         }
     }
 
+    
+    let mut node: Node = Node::new("node").size(10).count(5);
+
+    println!("Node: {} {} {} ", node.name, node.size, node.count);
+
+    node.to_string();
+
+    node.grow();
+
+    node.to_string();
+
+    node.inc();
+
+    node.to_string();
 }
 
