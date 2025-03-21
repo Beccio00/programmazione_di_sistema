@@ -157,7 +157,7 @@ fn main()  {
     let a_2 = 6;
     let b_2 = 8;
 
-match mul(a_0, b_0) {
+    match mul(a_0, b_0) {
         Ok(result) => println!("{}", result),
         Err(e) => {
             match e {
