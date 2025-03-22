@@ -10,7 +10,7 @@ struct Args {
 enum Error{
     Simple(SystemTime),
     Complex(SystemTime, String),
-
+    
 }
 
 pub enum MulErr {
