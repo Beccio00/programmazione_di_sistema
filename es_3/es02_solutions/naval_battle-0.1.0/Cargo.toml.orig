@@ -1,0 +1,10 @@
+[package]
+name = "naval_battle"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.3", features = ["derive", "cargo"] }
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
