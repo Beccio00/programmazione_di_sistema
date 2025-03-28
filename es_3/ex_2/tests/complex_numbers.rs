@@ -1,4 +1,4 @@
-use complex_numbers::solution::{ComplexNumber/* , ComplexNumberError*/};
+use complex_numbers::solution::{ComplexNumber , ComplexNumberError};
 
 // for this execise see https://doc.rust-lang.org/beta/std/primitive.f64.html
 // you can find examples for all the traits that must be implemented
@@ -27,7 +27,7 @@ pub fn test_display() {
     assert_eq!(format!("{c}"), "4.2 - 4.2i");
 }
 
-/*
+
 #[test]
 pub fn test_add() {
     // implement Add trait
@@ -51,6 +51,7 @@ pub fn test_add_with_real() {
     assert_eq!(b.to_tuple(), (11.0, 2.0))
 }
 
+
 #[test]
 pub fn test_inc_add() {
     let mut a = ComplexNumber::new(1.0, 2.0);
@@ -58,6 +59,7 @@ pub fn test_inc_add() {
 
     assert_eq!(a.to_tuple(), (3.0, 6.0))
 }
+
 
 #[test]
 pub fn test_add_with_reference() {
@@ -79,7 +81,6 @@ pub fn test_add_reference_with_reference() {
 
     assert_eq!(c.to_tuple(), (2.0, 4.0))
 }
-
 #[test]
 pub fn test_enable_copy() {
     // why this code won't compile? Read carefully the error message
@@ -90,6 +91,7 @@ pub fn test_enable_copy() {
 
     assert_eq!(b.to_tuple(), (2.0, 4.0));
 }
+
 
 #[test]
 pub fn test_default_values() {
@@ -102,28 +104,29 @@ pub fn test_default_values() {
     }
 }
 
+
 // commented out again when implementing TryInto see note below
-//#[test]
-//pub fn test_convert_into_real() {
+// #[test]
+// pub fn test_convert_into_real() {
 //    let a = ComplexNumber::from_real(1.0);
 //    let b: f64 = a.into();
-//
-//    assert_eq!(b, 1.0);
-//
-//}
 
-// commented out again when implementing TryInto because it's covered by TryInto see note below
-//#[test]
-//pub fn test_panic_when_impossible_to_convert_to_real() {
+//    assert_eq!(b, 1.0);
+
+// }
+
+// // commented out again when implementing TryInto because it's covered by TryInto see note below
+// #[test]
+// pub fn test_panic_when_impossible_to_convert_to_real() {
 //    // we can convert into a real only if imag is 0
 //    let a = ComplexNumber::new(1.0, 2.0);
-//
+
 //    let result = std::panic::catch_unwind(|| {
 //        let _: f64 = a.into();
 //    });
-//
+
 //    assert!(result.is_err());
-//}
+// }
 
 #[test]
 pub fn test_try_into_f64() {
@@ -162,7 +165,7 @@ pub fn test_try_from_f64() {
     let a: ComplexNumber = 1.0.into();
     assert_eq!(a.to_tuple(), (1.0, 0.0));
 }
-
+ 
 #[test]
 pub fn test_comparison() {
     let c = ComplexNumber::new(3.0, 6.0);
@@ -299,4 +302,4 @@ pub fn test_deque() {
         assert!(false);
     }
 }
- */
+ 

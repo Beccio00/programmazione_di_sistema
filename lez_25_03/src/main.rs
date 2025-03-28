@@ -39,7 +39,7 @@ struct Matricola {
 
 impl Matricola {
     fn next (&mut self) -> String {
-        self.counter += 1
+        self.counter += 1;
         format!("{}{:03}", self.prefisso, self.counter)
     }
 
