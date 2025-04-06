@@ -44,7 +44,7 @@ pub fn test_add() {
 
 #[test]
 pub fn test_add_with_real() {
-    // set RHS (rihgt hand side) type for Add!!! It's default value is Self, but it can be changed to anything
+    // sezrihgt hand side) type for Add!!! It's default value is Self, but it can be changed to anything
     let a = ComplexNumber::new(1.0, 2.0);
     let b = a + 10.0;
 
