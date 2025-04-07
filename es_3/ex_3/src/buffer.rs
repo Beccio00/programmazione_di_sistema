@@ -12,22 +12,27 @@ pub mod buffer {
         capacity: usize,
         is_empy: bool,
         is_full: bool,
-        buffer: Vec<Option<T>>,
+        buffer: Vec<T>,
     }
 
-    impl<T> CircularBuffer<T> {
-        pub fn new(cap: usize) -> Self {
-            if cap < 0 {
+    impl<T: Clone + Default> CircularBuffer<T> {
+        pub fn new(capacity: usize) -> Self {
+            if capacity < 0 {
                 panic!("{:?}", CircolarBufferError::InvalidCapacity);
             }
 
+            let mut buffer = Vec::with_capacity(capacity);
+
+            for _ in 0..capacity {
+                buffer.push(T::default());
+            }
             Self { 
                 head: 0,
                 tail: 0,
-                capacity: cap,
+                capacity,
                 is_empy: true,
                 is_full: false,
-                buffer: Vec::with_capacity(cap),
+                buffer,
             }
         }
 
@@ -35,7 +40,7 @@ pub mod buffer {
             if self.is_full {
                 Err(CircolarBufferError::BufferFull)
             } else {
-                self.buffer[self.tail] = Some(item);
+                self.buffer[self.tail] = item;
                 self.tail = (self.tail + 1) % self.capacity;
 
                 if self.tail == self.head {
@@ -50,7 +55,7 @@ pub mod buffer {
         pub fn read(&mut self) -> Option<T> {
             match self.is_empy {
                 false => {
-                    let item_return = std::mem::take(&mut self.buffer[self.head]);
+                    let item_return = self.buffer[self.head].clone();
                     self.head = (self.head + 1) % self.capacity;
 
                     if self.head == self.tail {
@@ -58,7 +63,7 @@ pub mod buffer {
                     }
 
                     self.is_full = false;
-                    item_return
+                    Some(item_return)
                 }
 
                 true => {
@@ -88,12 +93,17 @@ pub mod buffer {
         // // scrittura riscrivendo l’elemento più vecchio
 
         pub fn overwrite(&mut self, item: T) {
-            self.buffer[self.head] = Some(item);
+            self.buffer[self.head] = item;
         }
         // // vedi sotto*
         pub fn make_contiguous(&mut self) {
             if self.tail < self.head {
-                
+                let mut temp_vec = Vec::with_capacity(self.capacity);                
+                for i in 0..self.capacity {
+                    temp_vec[i] = self.buffer[(self.head + i) % self.capacity].clone();
+                }
+
+                self.buffer = temp_vec;                
             }
         }
     }

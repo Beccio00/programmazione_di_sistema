@@ -5,6 +5,5 @@ mod buffer;
 
 
 fn main() {
-  let buffer = CircularBuffer<u32>::new(10);
 
 }
