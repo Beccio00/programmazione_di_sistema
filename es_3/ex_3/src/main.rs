@@ -1,4 +1,4 @@
-use crate::buffer::buffer::{CircularBuffer, CircolarBufferError};
+use crate::buffer::buffer::{CircularBuffer, CircularBufferError};
 
 
 mod buffer;

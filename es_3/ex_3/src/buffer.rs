@@ -1,7 +1,7 @@
 pub mod buffer {
 
     #[derive(Debug)]
-    pub enum CircolarBufferError {
+    pub enum CircularBufferError {
         BufferFull,
         InvalidCapacity,
         BufferEmpy,
@@ -18,7 +18,7 @@ pub mod buffer {
     impl<T: Clone + Default> CircularBuffer<T> {
         pub fn new(capacity: usize) -> Self {
             if capacity < 0 {
-                panic!("{:?}", CircolarBufferError::InvalidCapacity);
+                panic!("{:?}", CircularBufferError::InvalidCapacity);
             }
 
             let mut buffer = Vec::with_capacity(capacity);
@@ -36,9 +36,9 @@ pub mod buffer {
             }
         }
 
-        pub fn write(&mut self, item: T) -> Result<&str, CircolarBufferError> {
+        pub fn write(&mut self, item: T) -> Result<&str, CircularBufferError> {
             if self.is_full {
-                Err(CircolarBufferError::BufferFull)
+                Err(CircularBufferError::BufferFull)
             } else {
                 self.buffer[self.tail] = item;
                 self.tail = (self.tail + 1) % self.capacity;
@@ -67,7 +67,8 @@ pub mod buffer {
                 }
 
                 true => {
-                    panic!("{:?}", CircolarBufferError::BufferEmpy);
+                    panic!("{:?}", CircularBufferError::BufferEmpy);
+                    
                 }
             }
         }
@@ -93,18 +94,47 @@ pub mod buffer {
         // // scrittura riscrivendo l’elemento più vecchio
 
         pub fn overwrite(&mut self, item: T) {
-            self.buffer[self.head] = item;
+            match self.is_full {
+                true => {
+                    self.buffer[self.head] = item;
+
+                },
+                false => {
+                    self.write(item).unwrap();
+                }                
+            }
         }
         // // vedi sotto*
         pub fn make_contiguous(&mut self) {
             if self.tail < self.head {
-                let mut temp_vec = Vec::with_capacity(self.capacity);                
+                let mut temp_vec = Vec::with_capacity(self.capacity);
+
+                for _ in 0..self.capacity {
+                    temp_vec.push(T::default());
+                }
+
                 for i in 0..self.capacity {
                     temp_vec[i] = self.buffer[(self.head + i) % self.capacity].clone();
                 }
 
-                self.buffer = temp_vec;                
+                self.tail = (self.size() + 1) % self.capacity; 
+                self.head = 0;
+                self.buffer = temp_vec;
+                
+                               
             }
+        }
+
+        pub fn get_tail(&self) -> usize {
+            self.tail
+        }
+
+        pub fn get_head(&self) -> usize {
+            self.head
+        }
+
+        pub fn get_buffer(&self) -> Vec<T> {
+            self.buffer.clone()
         }
     }
 }
