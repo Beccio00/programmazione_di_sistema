@@ -3,7 +3,8 @@
 // - you have also to implemment missing functions and fix the code
 // - *** see test test functions in the code for usage examples 
 
-use std::io;
+use std::{fs::{read, File}, io};
+use std::fs;
 
 // (1) LineEditor: implement functionality
 pub struct LineEditor {
@@ -22,7 +23,9 @@ impl LineEditor {
 
     // create a new LineEditor from a file
     pub fn from_file(file_name: &str) -> Result<Self, io::Error> {
-        unimplemented!();
+        let text_file = fs::read_to_string(file_name)?;
+        
+        Ok(Self::new(text_file))
     }
 
     pub fn all_lines(&self) -> Vec<&str> {
@@ -30,7 +33,10 @@ impl LineEditor {
     }
 
     pub fn replace(&mut self, line: usize, start: usize, end: usize, subst: &str) {
-        unimplemented!();
+        if let Some(l) = self.lines.get_mut(line) {
+            let modified_line = format!("{}{}{}", &l[0..start], subst, &l[end..]);
+            *l = modified_line;
+        }    
     }
 }
 
