@@ -5,6 +5,7 @@
 
 use std::{fs::{read, File}, io};
 use std::fs;
+use regex::Regex;
 
 // (1) LineEditor: implement functionality
 pub struct LineEditor {
@@ -42,60 +43,62 @@ impl LineEditor {
 
 
 
-// // (2) Match contains the information about the match. Fix the lifetimes
-// // repl will contain the replacement.
-// // It is an Option because it may be not set yet or it may be skipped 
-// struct Match {
-//     pub line: usize,
-//     pub start: usize,
-//     pub end: usize,
-//     pub text: &str,
-//     pub repl: Option<String>,
-// }
+// (2) Match contains the information about the match. Fix the lifetimes
+// repl will contain the replacement.
+// It is an Option because it may be not set yet or it may be skipped 
+struct Match <'a>{
+    pub line: usize,
+    pub start: usize,
+    pub end: usize,
+    pub text: &'a str,
+    pub repl: Option<String>,
+}
 
-// // use the crate "regex" to find the pattern and its method find_iter for iterating over the matches
-// // modify if necessary, this is just an example for using a regex to find a pattern
-// fn find_example(lines: &Vec<&str>, pattern: &str) -> Vec<Match> {
-//     let mut matches = Vec::new();
-//     let re = regex::Regex::new(pattern).unwrap();
-//     for (line_idx, line) in lines.iter().enumerate() {
-//         for mat in re.find_iter(line) {
-//             matches.push(Match {
-//                 line: line_idx,
-//                 start: mat.start(),
-//                 end: mat.end(),
-//                 text: &line[mat.start()..mat.end()],
-//                 repl: None,
-//             });
-//         }
-//     }
-//     matches
-// }
+// use the crate "regex" to find the pattern and its method find_iter for iterating over the matches
+// modify if necessary, this is just an example for using a regex to find a pattern
+fn find_example<'a>(lines: &'a Vec<&'a str>, pattern: &'a str) -> Vec<Match<'a>> {
+    let mut matches = Vec::new();
+    let re = regex::Regex::new(pattern).unwrap();
+    for (line_idx, line) in lines.iter().enumerate() {
+        for mat in re.find_iter(line) {
+            matches.push(Match {
+                line: line_idx,
+                start: mat.start(),
+                end: mat.end(),
+                text: &line[mat.start()..mat.end()],
+                repl: None,
+            });
+        }
+    }
+    matches
+}
 
-// // (3) Fix the lifetimes of the FindReplace struct
-// // (4) implement the Finder struct
-// struct FindReplace {
-//     lines: Vec<&str>,
-//     pattern: String,
-//     matches: Vec<Match>,
-// }
+// (3) Fix the lifetimes of the FindReplace struct
+// (4) implement the Finder struct
+struct FindReplace <'a> {
+    lines: Vec<&'a str>,
+    pattern: String,
+    matches: Vec<Match<'a>>,
+}
 
-// impl FindReplace {
-//     pub fn new(lines: Vec<&str>, pattern: &str) -> Self {
-//         unimplemented!()
-//     }
+impl <'a> FindReplace <'a>  {
+    pub fn new(lines: Vec<&'a str>, pattern: &'a str) -> Self {
+        let matches = find_example(&lines, pattern);
 
-//     // return all the matches
-//     pub fn matches(&self) -> &Vec<Match> {
-//         unimplemented!()
-//     }
+        Self { lines: lines, pattern: pattern.to_string(), matches: matches}
+    }
 
-//     // apply a function to all matches and allow to accept them and set the repl
-//     // useful for promptig the user for a replacement
-//     pub fn apply(&mut self, fun: impl Fn(&mut Match) -> bool) {
-//         unimplemented!()
-//     }
-// }
+    // return all the matches
+    pub fn matches(&self) -> &Vec<Match> {
+        unimplemented!()
+    }
+
+    // apply a function to all matches and allow to accept them and set the repl
+    // useful for promptig the user for a replacement
+    pub fn apply(&mut self, fun: impl Fn(&mut Match) -> bool) {
+        unimplemented!()
+    }
+}
 
 
 // //(5) how FindReplace should work together with the LineEditor in order

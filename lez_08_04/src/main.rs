@@ -17,7 +17,6 @@ fn main() {
             break;
         }
         //Se esco prima del loop vengono comunque droppate le che che avanzano
-        
     }
 
     //println!("{:?}", v); non lo posso vedere perchè ormai non esiste più v 
