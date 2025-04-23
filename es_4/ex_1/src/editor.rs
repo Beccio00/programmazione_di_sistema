@@ -188,16 +188,53 @@ struct LazyFinder <'a> {
 }
 
 impl <'a> LazyFinder <'a> {
-    pub fn new(lines: Vec<&str>, pattern: &str) -> Self {
-        unimplemented!()
+    pub fn new(lines: Vec<&'a str>, pattern: &str) -> Self {
+        Self { lines: lines, pattern: pattern.to_string(), pos: None }
     }
 
-    pub fn next(&mut self) -> Option<Match> {
+    pub fn next(&mut self) -> Option<Match<'a>> {
         // remember:
         // return None if there are no more matches
         // return Some(Match) if there is a match
         // each time save the position of the match for the next call
-        unimplemented!()
+        let re = Regex::new(&self.pattern).unwrap();
+        let mut start_line = 0;
+        let mut offset = 0;
+
+        if let Some(pos) = self.pos {
+            start_line = pos.line;
+            offset = pos.offset;
+        }
+
+        for line_idx in start_line..self.lines.len() {
+            let line = self.lines[line_idx];
+
+            let search_start = if line_idx == start_line { offset } else { 0 };
+            if search_start >= line.len() {
+                continue;
+            }
+
+            let sub_line = &line[search_start..];
+            if let Some(mat) = re.find(sub_line) {
+                let start = mat.start() + search_start;
+                let end = mat.end() + search_start;
+
+                // Save new position for the next call
+                self.pos = Some(FinderPos {
+                    line: line_idx,
+                    offset: end,
+                });
+
+                return Some(Match {
+                    line: line_idx,
+                    start,
+                    end,
+                    text: &line[start..end],
+                    repl: None,
+                });
+            }
+        }
+        None
     }
 }
 
@@ -222,12 +259,12 @@ fn test_lazy_finder() {
 struct FindIter <'a>{
     lines: Vec<&'a str>,
     pattern: String,
-    // ... other?
+    finder: LazyFinder<'a>
 }
 
 impl <'a> FindIter <'a> {
-    pub fn new(lines: Vec<&str>, pattern: &str) -> Self {
-        unimplemented!()
+    pub fn new(lines: Vec<&'a str>, pattern: &str) -> Self {
+        Self { lines: lines.clone(), pattern: pattern.to_string(), finder: LazyFinder::new(lines, pattern) }
     }
 }
 
@@ -235,7 +272,7 @@ impl <'a> Iterator for  FindIter <'a> {
     type Item = Match<'a>; // <== we inform the Iterator that we return a Match
 
     fn next(&mut self) -> Option<Self::Item> {
-        unimplemented!()
+        self.finder.next()
     }
 }
 
