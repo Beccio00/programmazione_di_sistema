@@ -1,0 +1,22 @@
+        self.inner.next().and_then(|entity| {
+            match entity {
+                Ok(dir_entity) => {
+                    let file = dir_entity.file_name().to_str();
+                    let line = dir_entity.depth();
+                    match read(dir_entity.path()) {
+                        Ok(t) => {
+                            let text = t.co
+                        }
+                    }
+                    unimplemented!()
+                },
+
+                Err(e) => {
+                    println!("Error: {}", e);
+                    Some(Err(e))
+                },
+            }
+        })
+Hello world!
+aksdfàasdfòljasdòlfòalsdfvò
+zcxvzx,cv.zxcv
