@@ -34,7 +34,7 @@ impl LineEditor {
     }
 
     pub fn replace(&mut self, line: usize, start: usize, end: usize, subst: &str) {
-        if let Some(l) = self.lines.get_mut(line) {
+        if let Some(l) = self.lines.get_mutz(line) {
             let modified_line = format!("{}{}{}", &l[0..start], subst, &l[end..]);
             *l = modified_line;
         }    

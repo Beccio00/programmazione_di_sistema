@@ -1,0 +1,9 @@
+[package]
+name = "ex_2"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+num = "0.4.3"
+regex = "1.11.1"
+walkdir = "2.5.0"
