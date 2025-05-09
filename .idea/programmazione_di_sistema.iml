@@ -2,8 +2,8 @@
 <module type="EMPTY_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/ex_3/src" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/ex_3/target" />
+      <sourceFolder url="file://$MODULE_DIR$/es_5/ex_1/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/es_5/ex_1/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

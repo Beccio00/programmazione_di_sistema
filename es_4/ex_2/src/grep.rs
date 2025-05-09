@@ -80,7 +80,7 @@ pub mod even_iter {
     // Solution: I is the type of the iterator that produces elements of type U
     // instead U is the type of elements inside the iterator, must be an integer type
     struct EvenIter<I, U> 
-        where 
+    where
         I: Iterator<Item = U> {
         iter: I
     }

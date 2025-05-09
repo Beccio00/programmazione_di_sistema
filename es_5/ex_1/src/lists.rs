@@ -48,6 +48,7 @@ pub mod mem_inspect {
 
 
 pub mod List1 {
+    use std::ops::{Deref, DerefMut};
 
     pub enum Node<T> {
         Cons(T, Box<Node<T>>),
@@ -58,7 +59,7 @@ pub mod List1 {
         head: Node<T>,
     }
 
-    impl<T> List<T> {
+    impl<T: Clone> List<T> {
         pub fn new() -> Self {
             Self { head: Node::Nil }
         }
@@ -71,45 +72,71 @@ pub mod List1 {
         // 3. you can't copy it either, because Box can't be copied
         // solution: use mem::replace to move the value of self.head into a new variable and replace it with Nil
         // 4. let self.head point to the new created node
-        pub fn push(&mut self, elem: i32) {
+        pub fn push(&mut self, elem: T) {
             let old_head = std::mem::replace(&mut self.head, Node::Nil);
             
             self.head = Node::Cons(elem, Box::new(old_head));
         }
 
         // pop the first element of the list and return it
-        fn pop(&mut self) -> Option<T> {
-            unimplemented!()
+        fn pop(&mut self) -> Option<T> where T: Clone {
+            let current_head = std::mem::replace(&mut self.head, Node::Nil);
+            match current_head {
+                Node::Cons(value, next) => {
+                    self.head = *next;
+                    Some(value)
+                },
+
+                Node::Nil => None,
+            }
+
         }
 
         // return a referece to the first element of the list
         pub fn peek(&self) -> Option<&T> {
-            unimplemented!()
+            match &self.head {
+                Node::Cons(value, _) => {Some(value)},
+                Node::Nil => {None},
+            }
         }
 
         // uncomment after having implemented the ListIter struct
         // return an interator over the list values
-        //fn iter(&self) -> ListIter<T> {
-        //    unimplemented!()
-        //}
+        fn iter(&self) -> ListIter<T> {
+           ListIter{next: &self.head}
+        }
 
         // take the first n elements of the list and return a new list with them
         pub fn take(&mut self, n: usize) -> List<T> {
-            unimplemented!()
+            let mut elements = List::new();
+            let mut count = 0;
+
+            while count < n {
+                elements.push(self.pop().unwrap());
+            }
+
+            elements
         }
     }
 
-    //struct ListIter {
-    //    // implement the iterator trait for ListIter
-    //}
-    //
-    //impl Iterator for ListIter {
-    //    //type Item = ...
-    //
-    //    fn next(&mut self) -> Option<Self::Item> {
-    //        unimplemented!()
-    //    }
-    //}
+    pub struct ListIter<'a, T> {
+        next: &'a Node<T>,
+    }
+
+    impl<'a, T> Iterator for ListIter<'a, T>
+    {
+       type Item = &'a T;
+
+       fn next(&mut self) -> Option<Self::Item> {
+            match self.next {
+                Node::Cons(value, box_next) => {
+                    self.next = box_next;
+                    Some(value)
+                },
+                Node::Nil => {None},
+            }
+       }
+    }
 
     // something that may be useful for the iterator implementation:
     // let a = Some(T);
