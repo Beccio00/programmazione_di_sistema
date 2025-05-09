@@ -11,8 +11,6 @@
 # KDE directory preferences
 .directory
 
-#idea
-.idea/
 
 # Linux trash folder which might appear on any partition or disk
 .Trash-*
