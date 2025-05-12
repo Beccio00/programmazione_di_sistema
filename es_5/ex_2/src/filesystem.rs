@@ -6,6 +6,7 @@ pub mod filesystem {
         name: String,
         parent: Weak<RefCell<FSItem>>,
     }
+    #[derive(Clone)]
     struct Directory {
         name: String,
         parent: Weak<RefCell<FSItem>>,
@@ -17,9 +18,9 @@ pub mod filesystem {
         target: String,
     }
     enum FSItem {
-        Directory(Directory), // Directory contiene nome, i figli, eventuali metadati, il padre
-        File(File), // File contiene il nome, eventuali metadati (es dimensione,owner, ecc), il padre
-        SymLink(Link), // Il link simbolico contiene il Path a cui punta e il padre
+        Directory(Directory),
+        File(File), 
+        SymLink(Link), 
     }
     pub struct FileSystem {
         root: Directory,
@@ -29,8 +30,13 @@ pub mod filesystem {
     impl FileSystem {
         // crea un nuovo FS vuoto
         pub fn new()  -> Self {
-            unimplemented!();
-
+            let root = Directory {
+                name: String::from("/"),
+                parent: Weak::new(),
+                children: Vec::new(),
+            };
+            let current_dir = root.clone();
+            FileSystem { root, current_dir }
         }
         // // crea un nuovo FS replicando la struttura su disco
         // pub fn from_disk() -> Self {
