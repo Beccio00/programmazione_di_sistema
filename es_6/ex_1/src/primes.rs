@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex};
+use std::thread::spawn;
 use std::{result, thread};
 
 
@@ -56,4 +57,35 @@ pub fn find_primes_counter(limit: u64, n_threads: u64) -> Vec<u64> {
 
 }
 
+pub fn find_primes_mod (limit: u64, n_threads: u64) -> Vec<u64> {
+    let mut primes = vec![];
+    let mut handles = vec![];
+
+    for i in 0..n_threads {
+        let handle = spawn(move || {
+            let mut private_primes = vec![];
+            let mut num = i;
+            while num < limit {
+                if is_prime(num) {
+                    private_primes.push(num);
+                }
+
+                num += n_threads;
+            }
+
+            private_primes 
+        });
+
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        let mut private_primes = handle.join().unwrap();
+        primes.append(&mut private_primes);
+    }
+
+    primes.sort();
+    primes
+
+}
 
