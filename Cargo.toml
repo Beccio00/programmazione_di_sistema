@@ -2,5 +2,6 @@
 members = [
     "es_5/ex_1",
     "es_5/ex_2",
+    "es_6/ex_1",
 ]
 resolver = "2"
