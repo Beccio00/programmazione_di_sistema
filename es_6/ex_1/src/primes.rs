@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
-use std::{result, thread};
+use std::thread;
 
 
 pub fn is_prime(n: u64) -> bool {
