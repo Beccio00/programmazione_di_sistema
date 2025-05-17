@@ -23,7 +23,7 @@
 # will have compiled files and executables
 debug/
 target/
-es_1/
+
 
 # Remove Cargo.lock from gitignore if creating an executable, leave it for libraries
 # More information here https://doc.rust-lang.org/cargo/guide/cargo-toml-vs-cargo-lock.html
@@ -62,7 +62,9 @@ rust-project.json
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,linux,rust,rust-analyzer
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
-
+#lez are useless of verson control
+es_1/
+lez*/
 
 
 # Added by cargo
