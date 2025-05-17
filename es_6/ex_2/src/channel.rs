@@ -1,24 +1,23 @@
-use std::{collections::VecDeque, fmt::Error, sync::{Arc, Condvar, Mutex}};
-
+use std::{collections::VecDeque, sync::{Arc, Condvar, Mutex}};
 
 pub enum Item<T> {
     Value(T),
     Stop,
 }
-
+#[derive(Debug)]
 pub enum ChannelError {
     Closed,
 
 }
 
-struct Channel<T> {
+pub struct Channel<T> {
     buffer: Arc<Mutex<VecDeque<Item<T>>>>,
     condvar: Arc<Condvar>,
     capacity: usize,
     closed: Arc<Mutex<bool>>,
 }
 
-impl<T> Channel<T> {
+impl<T: Clone> Channel<T> {
     pub fn new(capacity: usize) -> Self {
         Channel {
             buffer: Arc::new(Mutex::new(VecDeque::with_capacity(capacity))),
@@ -76,11 +75,18 @@ impl<T> Channel<T> {
         let mut buffer = self.buffer.lock().unwrap();
 
         closed = true;
-
         buffer.push_back(Item::Stop);
-
         self.condvar.notify_all();
     }
+}
 
-
+impl<T: Clone> Clone for Channel<T> {
+    fn clone(&self) -> Self {
+        Channel {
+            buffer: Arc::clone(&self.buffer),
+            condvar: Arc::clone(&self.condvar),
+            capacity: self.capacity,
+            closed: Arc::clone(&self.closed),
+        }
+    }
 }
