@@ -1,8 +1,8 @@
 [package]
-name = "ex_6_1"
+name = "ex_7_4"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-itertools = "0.14.0"
-meval = "0.2.0"
+crossbeam = "0.8.4"
+rand = "0.9.1"
