@@ -4,7 +4,6 @@ use rand::Rng;
 
 
 pub fn start_event_loop() {
-    
     let (cmd_sender, cmd_receiver): (Sender<String>, Receiver<String>) = unbounded();
     let (data_sender, data_receiver): (Sender<(String, i32)>, Receiver<(String, i32)>) = unbounded();
     
