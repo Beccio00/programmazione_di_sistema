@@ -5,6 +5,6 @@ members = [ "empy_project",
     "es_6/ex_1",
     "es_6/ex_2",
     "es_7/ex_1", "es_7/ex_2", "es_7/ex_3", "es_7/ex_4",
-    "exam_07_23",
+    "exams/exam_07_23", "exams/exam_09_24",
 ]
 resolver = "2"
