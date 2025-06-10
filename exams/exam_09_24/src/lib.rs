@@ -37,18 +37,18 @@
 // thread::spawn il possesso del dato clonato usando la parola chiave move. Di seguito il codice
 // con le correzioni spiegate.
 
-pub mod ex_1 {     
-   use std::thread;
-   use std::sync::{Arc, Mutex};
+pub mod ex_1 {
+    use std::sync::{Arc, Mutex};
+    use std::thread;
 
-   pub fn run_ex_1() {
-       // let n = Mutex::new(0);
+    pub fn run_ex_1() {
+        // let n = Mutex::new(0);
 
-       let shared_data = Arc::new(Mutex::new(0));
-       let mut handles = vec![];
+        let shared_data = Arc::new(Mutex::new(0));
+        let mut handles = vec![];
 
-       for _ in 0..10 {
-            let data  = shared_data.clone();
+        for _ in 0..10 {
+            let data = shared_data.clone();
             let handle = thread::spawn(move || {
                 let mut guard = data.lock().unwrap();
                 for _ in 0..100 {
@@ -63,9 +63,79 @@ pub mod ex_1 {
             handle.join().unwrap();
         }
 
-        println!("{}", shared_data.clone().lock().unwrap()); 
-
-
+        println!("{}", shared_data.clone().lock().unwrap());
     }
 }
 
+// fn main() {
+//     let mut valore = Rc::new(5);
+//     {
+//         println!("Value: {:?}", valore);
+
+//         let copia = Rc::clone(&valore);
+//         println!("Copied value: {:?}", copia);
+
+//         match Rc::get_mut(&mut valore) {
+//             Some(v) => *v += 10,
+//             None => println!("It seems that something had been wrong (case A)"),
+//         }
+//     }
+//     match Rc::get_mut(&mut valore) {
+//         Some(v) => *v += 10,
+//         None => println!("It seems that something had been wrong (case B)"),
+//     }
+//     println!("The final value is: {:?}", valore);
+// }
+
+//Si indichino gli eventuali errori di compilazione, oppure, in assenza di errori di compilazione si descriva
+// il comportamento del programma, indicando le stringhe visualizzate in output e giustificando la risposta.
+
+
+// non ci sono errori di compilazione. Il comportatmento del programma è il seguente: in valore è uno smart pointer
+// che punta a una variabile di valore 5, successivamente viene fatta un Rc::clone di valore in copia, che è una 
+// shallow copy del puntatore che incrementa il counter di Rc. Dopo si prova a modifacere il contenuto di valore
+// ma dato che valore non è l'unico puntatore e counter = 2 Rc::get_mut(&mut valore) sarà equivalente a None e 
+// verrà stampato a schermo "It seems that something had been wrong (case A)". Dopodichè la copia esce di scope
+// il counter dell'Rc ritorna a 1 ed è quindi possibile modificare il contenuto di valore e l'ultimo print stamperà 
+// "The final value is: 15"
+pub mod ex_2 {
+    use std::rc::Rc;
+
+    
+    pub fn run_ex_2() {
+        let a = 5;
+        let b = &a;
+        let mut valore = Rc::new(a);
+
+        println!("value: {}", b);
+        {   
+            println!("Value: {:?}", valore);
+
+            let mut copia = Rc::clone(&valore);
+
+            
+            println!("Copied value: {:?}", copia);
+            
+
+            match Rc::get_mut(&mut valore) {
+                Some(v) => *v += 10,
+                None => println!("It seems that something had been wrong (case A)"),
+            }
+            
+            println!("Value: {:?}", valore);
+
+            match Rc::get_mut(&mut copia) {
+                Some(v) => *v += 20,
+                None => println!("It seems that something had been wrong (case A)"),
+            }
+            println!("Value: {:?}", valore);
+            println!("Copied value: {:?}", copia);
+            
+        }
+        match Rc::get_mut(&mut valore) {
+            Some(v) => *v += 10,
+            None => println!("It seems that something had been wrong (case B)"),
+        }
+        println!("The final value is: {:?}", valore);
+    }
+}
