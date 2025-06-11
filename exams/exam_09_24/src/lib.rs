@@ -139,11 +139,11 @@ pub mod ex_2 {
 // confronto delle lunghezze delle stringhe string1 e string2.
 
 
-// fn fun1<'a>(x: &'a str, y: &'a str) -> &'a str {
+// fn fun1<'a>(x: &'a str, y: &a' str) -> &'a str {
 //     if x.len() < y.len() {
 //         x
 //     } else {
-//         &x[0..y.len()]
+//         &x[0..y.len()] 
 //     }
 // }
 
@@ -192,5 +192,157 @@ pub mod ex_3 {
         } else {
             y 
         }
+    }
+}
+
+
+/*
+Un CancelableLatch è un tratto di sincronizzazione che permette
+a uno o più thread di attendere, senza consumare cicli di CPU, che
+altri thread eseguano i propri compiti e ne segnalino l’esito.
+All’atto della creazione di questa struttura viene indicato il numero
+di compiti da attendere. La struttura offre il metodo count_down()
+che permette di indicare che uno dei compiti è terminato con successo:
+se non restano altri compiti da attendere, le attese vengono sbloccate
+con successo, altrimenti proseguono.
+Il metodo cancel() permette di segnalare che uno dei compiti è fallito:
+in questo caso, le attese vengono subito sbloccate indicando l’avvenuta
+cancellazione.
+La struttura offre due metodi di attesa: uno incondizionato (ovvero,
+l’attesa si protrae fino a che tutti i compiti sono stati terminati
+con successo o è stata richiesta una cancellazione) e uno con timeout
+(in questo caso, l’attesa può terminare anche se entro il tempo
+indicato non si raggiungono le condizioni precedenti: in tale caso
+viene segnalato che il tempo è scaduto).
+
+Si realizzi, usando il linguaggio Rust, una struttura che implementi tale tratto
+*/
+
+
+pub mod ex_4 {
+    use std::{io::repeat, sync::{Condvar, Mutex}, time::Duration};
+        
+    #[derive(PartialEq, Eq, Debug, Clone)]
+    pub enum WaitResult {
+        Success,
+        Timeout,
+        Canceled
+    }
+
+    pub struct LatchState {
+        counter: usize,
+        cancelled: bool,
+    }
+
+    pub struct Latch {
+        state: Mutex<LatchState>,
+        cv: Condvar,
+    }
+
+    pub trait CancelableLatch {
+        fn new(count: usize) -> Self;
+        fn count_down(&self);
+        fn cancel(&self);
+        fn wait(&self) -> WaitResult;
+        fn wait_timeout(&self, d: Duration) -> WaitResult;
+    }
+
+    impl CancelableLatch for Latch {
+        fn new(count: usize) -> Self {         
+
+            Latch { 
+                state: Mutex::new(LatchState { counter: count, cancelled: false }), 
+                cv: Condvar::new(),
+            }
+        }
+
+        fn count_down(&self) { 
+            let mut guard = self.state.lock().unwrap();
+
+            if guard.counter > 0 {
+                guard.counter -= 1;
+                if guard.counter == 0 {
+                    self.cv.notify_all();
+                }
+            }
+            
+        }
+        
+        fn cancel(&self) { 
+            let mut guard = self.state.lock().unwrap();
+
+            guard.cancelled = true;
+
+            self.cv.notify_all();
+
+        }
+        
+        fn wait(&self) -> WaitResult{
+            let guard = self.state.lock().unwrap();
+
+            let data = self.cv.wait_while(guard, |s| s.counter > 0 && !s.cancelled).unwrap();
+                
+            if data.cancelled {
+                WaitResult::Canceled
+            } else  {
+                WaitResult::Success
+            } 
+        }
+        
+        fn wait_timeout(&self, d: Duration) -> WaitResult { 
+            let guard = self.state.lock().unwrap();
+
+            let data = self.cv.wait_timeout_while(guard, d, |s| s.counter > 0 && !s.cancelled).unwrap();            
+
+            if data.0.cancelled {
+                WaitResult::Canceled
+            } else if data.1.timed_out() {
+                WaitResult::Timeout
+            } else {
+                WaitResult::Success
+            }
+            
+        }
+    }
+
+}
+
+mod test {
+    use crate::ex_4::{CancelableLatch, Latch, WaitResult};
+    use std::thread;
+    use std::sync::Arc;
+    use std::time::Duration;
+
+    #[test]
+    fn test_multi_thread_cancel() {
+        let latch = Arc::new(Latch::new(100)); 
+        let mut handles = Vec::new();
+    
+        for _ in 0..5 {
+            let latch_clone = Arc::clone(&latch);
+            let handle = thread::spawn(move || {
+                latch_clone.count_down();
+            });
+            handles.push(handle);
+        }
+    
+        let latch_canceller = Arc::clone(&latch);
+        let canceller = thread::spawn(move || {
+            thread::sleep(Duration::from_millis(50));
+            latch_canceller.cancel();
+        });
+    
+        let latch_waiter = Arc::clone(&latch);
+        let waiter = thread::spawn(move || {
+            latch_waiter.wait()
+        });
+    
+        for handle in handles {
+            handle.join().unwrap();
+        }
+        canceller.join().unwrap();
+    
+        let result = waiter.join().unwrap();
+        assert_eq!(result, WaitResult::Canceled);
     }
 }
