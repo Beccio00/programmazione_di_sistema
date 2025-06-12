@@ -77,9 +77,9 @@ pub mod ex_2 {
     // modificare la variabile start e impostarla a true e poi svegliare il thread principale con notify_one(), così da simulare il fatto che il thread
     // ha iniziato la sua esecuzione e avvisare ciò attraverso il mutex. Il thread principaale invece prima esegue sleep per un secondo, simulando
     // l'escuzione successivamente esgue wait su il mutexguard che condivisono i due thread. Quindi il thread svegliara il thread principale nel momento
-    // in cui finisce. In questo caso ci possono essere delle notifiche supurie e quindi sterted non è stato modificato e quindi è comunque false, per come		
+    // in cui finisce. In questo caso ci possono essere delle notifiche supurie e quindi sterted non è stato modificato e quindi è comunque false, per come
     // come è stato implementato il codice non c'è nessuno controllo quindi il thread prinicpale pensa che il secondo thread abbia già fatto quello che d
-    // doveva fare. Per miglioare il codice basta sostuire wait(started) con wait_while(!*started) in modo che anche se viene svegliato ma started è ancora       
+    // doveva fare. Per miglioare il codice basta sostuire wait(started) con wait_while(!*started) in modo che anche se viene svegliato ma started è ancora
     // false allora rimane in attesa.
 
     use std::sync::{Arc, Condvar, Mutex};
@@ -125,29 +125,29 @@ pub mod ex_2 {
 ///}
 
 pub mod ex_3 {
-	// Il problema di questo codice è che in s inzialmente è in possesso di una variabile tipo S che non implementa il tratto Copy. Nel momento in cui
-	// viene fatto v.push(s) la prima volta avviene con successo e la variabile s viene mossa all'interno dell'heap dove punta v, consumando s.
-	// al secondo passaggio del ciclo in s non esiste più e v.push e il borrow cheker darà errore di compilazione. Per renderlo compatibile con la
-	// la logica implementata basterebbe far si che struct S derivi anche i tratti Clone e Copy. In questo modo quando viene eseguito v.push 
-	// non viene mossa la variabile s ma viene inserita in v una copia di S.
-	
-	#[derive(Debug, Clone, Copy)]
-	struct S {
-	    i: i32,
-	}
-	impl From<i32> for S {
-	    fn from(value: i32) -> Self {
-		S { i: value }
-	    }
-	}
-	pub fn run_ex_3() {
-	    let mut v = Vec::<S>::new();
-	    let s = 42.into();
-	    for i in 0..3 {
-		v.push(s);
-	    }
-	    println!("{:?}", v);
-	}
+    // Il problema di questo codice è che in s inzialmente è in possesso di una variabile tipo S che non implementa il tratto Copy. Nel momento in cui
+    // viene fatto v.push(s) la prima volta avviene con successo e la variabile s viene mossa all'interno dell'heap dove punta v, consumando s.
+    // al secondo passaggio del ciclo in s non esiste più e v.push e il borrow cheker darà errore di compilazione. Per renderlo compatibile con la
+    // la logica implementata basterebbe far si che struct S derivi anche i tratti Clone e Copy. In questo modo quando viene eseguito v.push
+    // non viene mossa la variabile s ma viene inserita in v una copia di S.
+
+    #[derive(Debug, Clone, Copy)]
+    struct S {
+        i: i32,
+    }
+    impl From<i32> for S {
+        fn from(value: i32) -> Self {
+            S { i: value }
+        }
+    }
+    pub fn run_ex_3() {
+        let mut v = Vec::<S>::new();
+        let s = 42.into();
+        for i in 0..3 {
+            v.push(s);
+        }
+        println!("{:?}", v);
+    }
 }
 
 //      Si realizzi l’implementazione della struttura dati Exchanger<T: Send> (e dei metodi e delle
@@ -167,5 +167,196 @@ pub mod ex_3 {
 //     sia thread-safe
 
 pub mod ex_4 {
+    use std::sync::{Arc, Condvar, Mutex};
 
+    #[derive(Debug, PartialEq, Clone, Copy)]
+    pub enum ExchangeState {
+        Empty,
+        Waiting,
+    }
+
+    pub struct SharedState<T: Send> {
+        value1: Option<T>,
+        value2: Option<T>,
+        state: ExchangeState,
+        dropped: bool,
+    }
+
+    #[derive(Clone)]
+    pub struct Exchanger<T: Send> {
+        shared: Arc<Mutex<SharedState<T>>>,
+        condvar: Arc<Condvar>,
+    }
+
+    impl<T: Send> Exchanger<T> {
+        pub fn new() -> (Self, Self) {
+            let shared = Arc::new(Mutex::new(SharedState {
+                value1: None,
+                value2: None,
+                state: ExchangeState::Empty,
+                dropped: false,
+            }));
+            let condvar = Arc::new(Condvar::new());
+
+            let ex1 = Exchanger {
+                shared: Arc::clone(&shared),
+                condvar: Arc::clone(&condvar),
+            };
+
+            let ex2 = Exchanger {
+                shared: Arc::clone(&shared),
+                condvar: Arc::clone(&condvar),
+            };
+
+            (ex1, ex2)
+        }
+
+        pub fn exchange(&self, value: T) -> Option<T> {
+            let mut guard = self.shared.lock().unwrap();
+
+            if guard.dropped {
+                return None;
+            }
+
+            match guard.state {
+                ExchangeState::Empty => {
+                    guard.value1 = Some(value);
+                    guard.state = ExchangeState::Waiting;
+
+                    guard = self.condvar.wait_while(guard, |state| {
+                        state.state == ExchangeState::Waiting && !state.dropped
+                    }).unwrap();
+
+                    if guard.dropped {
+                        guard.value1 = None;
+                        guard.value2 = None;
+                        guard.state = ExchangeState::Empty;
+                        None
+                    } else {
+                        let result = guard.value2.take();
+                        guard.value1 = None;
+                        guard.state = ExchangeState::Empty;
+                        result
+                    }
+                }
+
+                ExchangeState::Waiting => {
+                    let other_value = guard.value1.take().unwrap();
+                    guard.value2 = Some(value);
+                    guard.state = ExchangeState::Empty;
+
+                    self.condvar.notify_one();
+                    Some(other_value)
+                }
+            }
+        }
+    }
+
+    impl<T: Send> Drop for Exchanger<T> {
+        fn drop(&mut self) {
+            if let Ok(mut guard) = self.shared.lock() {
+                guard.dropped = true;
+                self.condvar.notify_all();
+            }
+        }
+    }
+}
+
+
+    use super::ex_4::Exchanger;
+    use std::thread;
+    use std::time::Duration;
+
+    #[test]
+    fn test_basic_exchange() {
+        let (ex1, ex2) = Exchanger::new();
+
+        let handle1 = thread::spawn(move || {
+            ex1.exchange(42)
+        });
+
+        let handle2 = thread::spawn(move || {
+            ex2.exchange(100)
+        });
+
+        let result1 = handle1.join().unwrap();
+        let result2 = handle2.join().unwrap();
+
+        assert_eq!(result1, Some(100));
+        assert_eq!(result2, Some(42));
+    }
+
+    #[test]
+    fn test_string_exchange() {
+        let (ex1, ex2) = Exchanger::new();
+
+        let handle1 = thread::spawn(move || {
+            ex1.exchange("hello".to_string())
+        });
+
+        let handle2 = thread::spawn(move || {
+            ex2.exchange("world".to_string())
+        });
+
+        let result1 = handle1.join().unwrap();
+        let result2 = handle2.join().unwrap();
+
+        assert_eq!(result1, Some("world".to_string()));
+        assert_eq!(result2, Some("hello".to_string()));
+    }
+
+    #[test]
+    fn test_drop_while_waiting() {
+        let (ex1, ex2) = Exchanger::new();
+
+        let handle1 = thread::spawn(move || {
+            // Aspetta un po' per assicurarsi che ex1 sia in attesa
+            thread::sleep(Duration::from_millis(50));
+            ex1.exchange(42)
+        });
+
+        // Droppa ex2 immediatamente
+        drop(ex2);
+
+        let result1 = handle1.join().unwrap();
+        assert_eq!(result1, None);
+    }
+
+    #[test]
+    fn test_multiple_exchanges() {
+        let (ex1, ex2) = Exchanger::new();
+
+        // Primo scambio
+        let handle1 = thread::spawn({
+            let ex1 = ex1.clone();
+            move || ex1.exchange(1)
+        });
+
+        let handle2 = thread::spawn({
+            let ex2 = ex2.clone();
+            move || ex2.exchange(10)
+        });
+
+        assert_eq!(handle1.join().unwrap(), Some(10));
+        assert_eq!(handle2.join().unwrap(), Some(1));
+
+        // Secondo scambio
+        let handle3 = thread::spawn(move || ex1.exchange(2));
+        let handle4 = thread::spawn(move || ex2.exchange(20));
+
+        assert_eq!(handle3.join().unwrap(), Some(20));
+        assert_eq!(handle4.join().unwrap(), Some(2));
+    }
+
+    #[test]
+    fn test_exchange_after_drop() {
+        let (ex1, ex2) = Exchanger::new();
+
+        // Droppa ex1
+        drop(ex1);
+
+        // Prova a usare ex2
+        let result = ex2.exchange(42);
+        assert_eq!(result, None);
+    }
 }
