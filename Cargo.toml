@@ -4,7 +4,7 @@ members = [ "empy_project",
     "es_5/ex_2",
     "es_6/ex_1",
     "es_6/ex_2",
-    "es_7/ex_1", "es_7/ex_2", "es_7/ex_3", "es_7/ex_4", "exams/exam_01_24", "exams/exam_06_23", "exams/exam_06_24",
-    "exams/exam_07_23", "exams/exam_09_24",
+    "es_7/ex_1", "es_7/ex_2", "es_7/ex_3", "es_7/ex_4", "exams/exam_01_24", "exams/exam_01_25", "exams/exam_06_23", "exams/exam_06_24",
+    "exams/exam_07_23", "exams/exam_07_24", "exams/exam_09_24",
 ]
 resolver = "2"
