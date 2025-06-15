@@ -8,7 +8,7 @@
 // trascorso un intervallo pari a delay e restituisce true;
 // se invece il DelayedExecutor è chiuso, restituisce false.
 
-/// close(drop_pending_tasks: bool) chiude il DelayedExecutor;
+/// close(drop_pending_tasks: bool) //chiude il DelayedExecutor;
 // se drop_pending_tasks è true, le funzioni in attesa di essere eseguite vengono eliminate, altrimenti
 // vengono eseguite a tempo debito.
 // DelayedExecutor è thread-safe e può essere utilizzato da più thread contemporaneamente.
@@ -17,11 +17,12 @@
 // un'esecuzione questa viene portata a termine evitando di creare corse critiche.Si implementi questa struct in linguaggio Rust.
 
 mod ex_4 {
-    use std::{collections::BinaryHeap, sync::{Arc, Condvar, Mutex}, thread::{self, JoinHandle}, time::Instant};
+    use std::{collections::{self, BinaryHeap}, sync::{Arc, Condvar, Mutex}, thread::{self, JoinHandle}, time::{Duration, Instant}};
 
 
     type Job = Box<dyn FnOnce() + Send + 'static>;
 
+    #[derive(PartialEq)]
     pub enum DelayedExecutorstate {
         Open,
         Close,
@@ -59,12 +60,12 @@ mod ex_4 {
     pub struct DelayedExecutor {
         shared: Arc<Mutex<(BinaryHeap<Task>, DelayedExecutorstate)>>,
         cv: Arc<Condvar>,
-        jh: JoinHandle<()>,
+        jh: Option<JoinHandle<()>>,
     }
 
     impl DelayedExecutor {
         pub fn new() -> Self {
-            let shared = Arc::new(Mutex::new((BinaryHeap::new(), DelayedExecutorstate::Open)));
+            let shared = Arc::new(Mutex::new((BinaryHeap::<Task>::new(), DelayedExecutorstate::Open)));
             let convar = Arc::new(Condvar::new());
 
             let share_clone = Arc::clone(&shared);
@@ -75,31 +76,97 @@ mod ex_4 {
                 loop {
                     let now = Instant::now();
 
-                    let (heap, state) = &*share_clone.lock().unwrap();
+                    let mut guard = share_clone.lock().unwrap();
 
-                    match *state {
-                        DelayedExecutorstate::Close => {break;}
-                        DelayedExecutorstate::Open => {
-                            if let Some(task) = heap.peek() {
-                                if (*task).instant <= now {
-
-
-                                }
-                            }
+                    guard = convar_clone.wait_while(guard, |g| {
+                        match g.0.peek() {
+                            Some(task) => task.instant > Instant::now() && g.1 == DelayedExecutorstate::Open,
+                            None => g.1 == DelayedExecutorstate::Open
                         }
-                    }
-                    
-                    
-                     
+                    }).unwrap();
 
+                    if guard.1 == DelayedExecutorstate::Close {
+                        break;
+                    }
+
+                    if let Some(task) = guard.0.peek() {
+                        if task.instant <= Instant::now() {
+                            let task = guard.0.pop().unwrap();
+                            drop(guard);
+                            (task.job)();
+                        }
+                    }                    
 
                 }
             });
 
-            DelayedExecutor { shared: shared, cv: convar, jh: handler }
+            DelayedExecutor { shared: shared, cv: convar, jh: Some(handler) }
+        }
+
+        pub fn execute<F: FnOnce()+Send+'static>(&self, f:F, delay: Duration) -> bool {
+            
+            
+            let  (heap, state) = &mut *self.shared.lock().unwrap();
+            match *state {
+                DelayedExecutorstate::Close => {
+                    false
+                },
+
+                DelayedExecutorstate::Open => {
+                    heap.push(Task { job: Box::new(f), instant: Instant::now() + delay });
+
+                    self.cv.notify_all();
+                    true                    
+                }
+            }
+
+
+        }
+
+        pub fn close(&self, drop_pending_task: bool) {
+            let (heap, state) = &mut *self.shared.lock().unwrap();
+            
+            if drop_pending_task {
+                heap.clear();
+            }
+            
+            *state = DelayedExecutorstate::Close;
+            self.cv.notify_all();
         }
     }
 
+    impl Drop for DelayedExecutor {
+        fn drop(&mut self) {
+            self.close(true);
+            self.jh.take().unwrap().join().unwrap();
+        }
+    }
     
 
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::ex_4::{DelayedExecutor, DelayedExecutorstate};
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+    use std::time::Duration;
+
+    #[test]
+    fn test_delayed_executor() {
+        let executor = DelayedExecutor::new();
+        let counter = Arc::new(Mutex::new(0));
+        let counter_clone = Arc::clone(&counter);
+
+        executor.execute(move || {
+            let mut count = counter_clone.lock().unwrap();
+            *count += 1;
+        }, Duration::from_millis(100));
+
+        thread::sleep(Duration::from_millis(200));
+        assert_eq!(*counter.lock().unwrap(), 1);
+        
+        executor.close(true);
+    }
 }
