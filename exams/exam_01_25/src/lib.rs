@@ -39,7 +39,7 @@ mod ex_4 {
         }
     }
 
-    impl Ord for Task {
+    impl Ord for Task { 
         fn cmp(&self, other: &Self) -> std::cmp::Ordering {
             other.instant.cmp(&self.instant)
         }
